@@ -404,7 +404,13 @@
                 // Request mic permission early for smoother start
                 await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                conversation = await Conversation.startSession({
+                // Show overlay immediately so user sees "Connecting..."
+                overlay.classList.add('active');
+                status.textContent = 'Connecting...';
+
+                // Try with overrides first; if that fails, retry without overrides
+                // (overrides require manual enablement in ElevenLabs dashboard Security tab)
+                let sessionConfig = {
                     agentId: AGENT_ID,
                     overrides: {
                         agent: {
@@ -420,8 +426,8 @@
                         }
                     },
                     onConnect: () => {
-                        overlay.classList.add('active');
-                        status.textContent = 'Connected';
+                        overlay.classList.add('active'); // ensure visible
+                        status.textContent = 'Connected — Sarah will speak shortly...';
                         conversationLog.length = 0;
                         conversationLog.push({
                             time: new Date().toISOString(),
@@ -459,12 +465,13 @@
                     },
                     onError: (error) => {
                         console.error('Conversation error:', error);
-                        status.textContent = 'Connection error - please try again';
+                        status.textContent = 'Connection error — please try again';
                         setTimeout(() => {
                             overlay.classList.remove('active');
                             btn.disabled = false;
                             btn.textContent = 'Speak with Sarah Now';
-                        }, 2000);
+                            conversation = null;
+                        }, 3000);
                     },
                     onModeChange: (mode) => {
                         currentMode = mode.mode;
@@ -476,16 +483,26 @@
                             status.textContent = 'Listening...';
                         }
                     }
-                });
+                };
+
+                try {
+                    conversation = await Conversation.startSession(sessionConfig);
+                } catch (overrideErr) {
+                    console.warn('Session with overrides failed, retrying without overrides:', overrideErr);
+                    // Remove overrides and retry — the agent will use its dashboard defaults
+                    delete sessionConfig.overrides;
+                    conversation = await Conversation.startSession(sessionConfig);
+                }
 
             } catch (err) {
                 console.error('Failed to start:', err);
+                overlay.classList.remove('active');
                 btn.disabled = false;
                 btn.textContent = 'Speak with Sarah Now';
                 if (err.name === 'NotAllowedError') {
                     alert('Microphone access is required to speak with Sarah. Please allow microphone access and try again.');
                 } else {
-                    alert('Could not connect. Please check your internet connection and try again.');
+                    alert('Could not connect. Please check your internet connection and try again.\n\nError: ' + (err.message || err));
                 }
             }
         }
