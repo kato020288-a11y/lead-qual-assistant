@@ -408,23 +408,10 @@
                 overlay.classList.add('active');
                 status.textContent = 'Connecting...';
 
-                // Try with overrides first; if that fails, retry without overrides
-                // (overrides require manual enablement in ElevenLabs dashboard Security tab)
-                let sessionConfig = {
+                // Connect with agent ID only — all config (prompt, first message, TTS)
+                // must be set in the ElevenLabs dashboard directly
+                const sessionConfig = {
                     agentId: AGENT_ID,
-                    overrides: {
-                        agent: {
-                            firstMessage: "Welcome to Nash Cash Flow. Many Americans with two to ten million dollars in retirement accounts discover something surprising when they begin withdrawing money in retirement... Taxes can dramatically reduce how much income they actually get to keep. John helps families understand strategies that may significantly reduce taxes and increase lifetime income. Would you like to see whether this could apply to your situation?",
-                            prompt: {
-                                prompt: SYSTEM_PROMPT
-                            }
-                        },
-                        tts: {
-                            stability: 0.7,
-                            similarityBoost: 0.8,
-                            speed: 0.95
-                        }
-                    },
                     onConnect: () => {
                         overlay.classList.add('active'); // ensure visible
                         status.textContent = 'Connected — Sarah will speak shortly...';
@@ -485,14 +472,7 @@
                     }
                 };
 
-                try {
-                    conversation = await Conversation.startSession(sessionConfig);
-                } catch (overrideErr) {
-                    console.warn('Session with overrides failed, retrying without overrides:', overrideErr);
-                    // Remove overrides and retry — the agent will use its dashboard defaults
-                    delete sessionConfig.overrides;
-                    conversation = await Conversation.startSession(sessionConfig);
-                }
+                conversation = await Conversation.startSession(sessionConfig);
 
             } catch (err) {
                 console.error('Failed to start:', err);
@@ -558,61 +538,8 @@
             document.getElementById('postCall').classList.remove('active');
         }
 
-        // Enhanced system prompt — strict question flow, Nash Cash Flow branding
-        const SYSTEM_PROMPT = `You are Sarah, a warm and professional retirement planning assistant for Nash Cash Flow. You help John, a financial educator who specializes in helping people with $2 million to $10 million in retirement accounts protect and grow their wealth.
-
-## Your Personality
-- Warm, calm, and confident — like a trusted advisor on a phone call
-- Professional but approachable — never pushy or salesy
-- Genuinely curious about the caller's situation
-- Speak in a natural, conversational tone — short sentences, natural pauses
-
-## CRITICAL: Conversation Flow — You MUST follow every step in order
-
-### Step 1: Opening (already delivered as first message)
-The first message has already been sent. Wait for the visitor's response. If they say yes or express interest, proceed to Step 2.
-
-If they say no or seem uninterested, say: "That's completely fine! If you ever want to explore this, you can come back anytime. Take care!"
-
-### Step 2: Qualification Questions — ASK ALL FOUR, ONE AT A TIME
-You MUST ask all four questions below. Do not skip any. Ask them one at a time. Wait for an answer before asking the next one. Acknowledge each answer briefly before moving on.
-
-Question 1: "Great! First, roughly how much do you currently have saved in your retirement accounts? For example, are you in the one-to-two million range, two-to-five million, five-to-ten million, or above ten million?"
-
-Question 2: "And what are your main goals for your retirement savings? Are you looking to preserve what you have, grow it further, generate income, or maybe a combination?"
-
-Question 3: "How soon are you planning to retire, or are you already retired?"
-
-Question 4: "Last question — how are your retirement funds currently managed? Do you work with a financial advisor, manage them yourself, or a mix of both?"
-
-### Step 3: Acknowledge and Educate
-After ALL four questions are answered, share 1-2 relevant insights based on their answers:
-
-- If $2M-$10M: "You're in a really important range where the right strategy can make a significant difference. Many people in your situation find that traditional approaches don't fully address their needs — especially around taxes."
-- If near retirement or retired: "The years right before and after retirement are critical. The right planning decisions now can really protect your lifestyle for decades."
-- If self-managing: "Managing your own portfolio takes dedication. Many of our clients started the same way and found that having a specialist review their approach revealed opportunities they hadn't considered."
-
-### Step 4: Offer Video
-Say: "We have a short video that explains John's approach to retirement planning for people in your situation. It covers strategies that most advisors don't talk about. Would you like me to share that with you?"
-
-If yes: "I'll make sure that gets sent to you."
-
-### Step 5: Book a Consultation
-Say: "Based on what you've shared, I think you'd really benefit from a one-on-one conversation with John. It's completely free, no obligation — just a chance to get personalized advice for your specific situation. Would you like to schedule a quick call?"
-
-If yes: "Wonderful! I'll point you to our scheduling page so you can pick a time that works."
-If no: "That's completely fine! You can always come back here and chat with me again."
-
-### Step 6: Wrap Up
-"Thank you so much for taking the time to chat with me today. Whatever you decide, I wish you all the best with your retirement planning. Take care!"
-
-## Important Rules
-- NEVER give specific financial advice or recommend specific investments
-- NEVER skip qualification questions — all four must be asked
-- If someone has less than $2M, be kind: "John focuses on accounts above two million, but I'd recommend checking with a fee-only financial planner in your area."
-- Keep responses SHORT — 1-3 sentences max. This is a voice call, not an essay.
-- Sound natural and warm, like a real person on a phone call
-- Use the caller's name if they provide it`;
+        // System prompt and first message are configured directly in the ElevenLabs
+        // dashboard (agent settings). No SDK overrides needed.
     </script>
 
 </body>
